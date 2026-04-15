@@ -396,12 +396,13 @@ G29_TYPE GcodeSuite::G29() {
 
     #if ABL_USES_GRID
 
-      constexpr feedRate_t min_probe_feedrate_mm_s = XY_PROBE_FEEDRATE_MIN;
-      xy_probe_feedrate_mm_s = MMM_TO_MMS(parser.linearval('S', XY_PROBE_FEEDRATE));
-      if (xy_probe_feedrate_mm_s < min_probe_feedrate_mm_s) {
-        xy_probe_feedrate_mm_s = min_probe_feedrate_mm_s;
-        SERIAL_ECHOLNPGM(GCODE_ERR_MSG("Feedrate (S) too low. (Using ", min_probe_feedrate_mm_s, ")"));
+      constexpr feedRate_t min_probe_feedrate_mm_m = XY_PROBE_FEEDRATE_MIN;
+      feedRate_t xy_probe_feedrate_mm_m = parser.linearval('S', XY_PROBE_FEEDRATE);
+      if (xy_probe_feedrate_mm_m < min_probe_feedrate_mm_m) {
+        xy_probe_feedrate_mm_m = min_probe_feedrate_mm_m;
+        SERIAL_ECHOLNPGM(GCODE_ERR_MSG("Feedrate (S) too low. (Using ", min_probe_feedrate_mm_m, " units/min)"));
       }
+      xy_probe_feedrate_mm_s = MMM_TO_MMS(xy_probe_feedrate_mm_m);
 
       const float x_min = probe.min_x(), x_max = probe.max_x(),
                   y_min = probe.min_y(), y_max = probe.max_y();
