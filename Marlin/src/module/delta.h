@@ -71,15 +71,15 @@ void recalc_delta_settings();
  *   (see above)
  */
 
-// Macro to obtain the Z position of an individual tower
-#define DELTA_Z(V,T) V.z + SQRT(          \
-  delta_diagonal_rod_2_tower[T] - HYPOT2( \
-      delta_tower[T].x - V.x,             \
-      delta_tower[T].y - V.y              \
+// Macro to obtain the X position of an individual carriage
+#define DELTA_X(V,T) delta_tower[T].x * V.x + delta_tower[T].y * V.y + SQRT(          \
+  DELTA_ROD_L2 - HYPOT2( \
+      (V.z + DELTA_Z_OFFSET + DELTA_TRUE_HEIGHT - delta_height) / DELTA_TOP_RATIO,   \
+      delta_tower[T].x * V.y - delta_tower[T].y * V.x              \
     )                                     \
   )
 
-#define DELTA_IK(V) motion.delta.set(DELTA_Z(V, A_AXIS), DELTA_Z(V, B_AXIS), DELTA_Z(V, C_AXIS))
+#define DELTA_IK(V) motion.delta.set(DELTA_X(V, A_AXIS), DELTA_X(V, B_AXIS), DELTA_X(V, C_AXIS))
 
 void inverse_kinematics(const xyz_pos_t &raw);
 

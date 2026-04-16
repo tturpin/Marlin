@@ -857,6 +857,9 @@ G29_TYPE GcodeSuite::G29() {
       set_bed_leveling_enabled(abl.reenable);
       abl.measured_z = NAN;
     }
+
+    // Move back to the center of the bed to prevent crash while homing afterwards
+    motion.blocking_move_xy(0.0f, 0.0f);
   }
   #endif // !PROBE_MANUALLY
 

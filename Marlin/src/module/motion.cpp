@@ -1272,7 +1272,7 @@ void Motion::restore_feedrate_and_scaling() {
     #elif ENABLED(DELTA)
 
       soft_endstop.min[axis] = base_min_pos(axis);
-      soft_endstop.max[axis] = (axis == Z_AXIS) ? DIFF_TERN(HAS_BED_PROBE, delta_height, probe.offset.z) : base_max_pos(axis);
+      soft_endstop.max[axis] = (axis == Z_AXIS) ? delta_height : base_max_pos(axis);
 
       switch (axis) {
         case X_AXIS:
@@ -1607,13 +1607,6 @@ float Motion::get_move_distance(const xyze_pos_t &diff OPTARG(HAS_ROTATIONAL_AXE
     //SERIAL_ECHOLNPGM("Current pos: ", position.x, " , ", position.y, " , ", position.z, " , ", position.e);
     //SERIAL_ECHOLNPGM("Difference : ", diff.x, " , ", diff.y, " , ", diff.z, " , ", diff.e);
 
-    // For TPARA always split up the move, then skip next code
-    // For DELTA/SCARA if the move is only in Z/E don't split up the move
-    if (TERN0(AXEL_TPARA, !diff.x && !diff.y)) {
-      planner.buffer_line(destination, scaled_fr_mm_s);
-      return false; // caller will update position
-    }
-
     // Fail if attempting move outside printable radius
     if (!can_reach(destination)) return true;
 
@@ -1701,12 +1694,6 @@ float Motion::get_move_distance(const xyze_pos_t &diff OPTARG(HAS_ROTATIONAL_AXE
     void Motion::goto_destination_segmented(const feedRate_t fr_mm_s, const float segment_size/*=LEVELED_SEGMENT_LENGTH*/) {
 
       const xyze_float_t diff = destination - position;
-
-      // If the move is only in Z/E don't split up the move
-      if (!diff.x && !diff.y) {
-        planner.buffer_line(destination, fr_mm_s);
-        return;
-      }
 
       // Get the linear distance in XYZ
       #if HAS_ROTATIONAL_AXES
@@ -2873,7 +2860,7 @@ void Motion::set_axis_is_at_home(const AxisEnum axis) {
   #if IS_SCARA
     scara_set_axis_is_at_home(axis);
   #elif ENABLED(DELTA)
-    position[axis] = (axis == Z_AXIS) ? DIFF_TERN(HAS_BED_PROBE, delta_height, probe.offset.z) : base_home_pos(axis);
+    position[axis] = (axis == Z_AXIS) ? delta_height : base_home_pos(axis);
   #elif NUM_AXES
     position[axis] = SUM_TERN(HAS_HOME_OFFSET, base_home_pos(axis), home_offset[axis]);
   #endif

@@ -63,15 +63,14 @@ abc_float_t delta_diagonal_rod_trim;
 float delta_safe_distance_from_top();
 
 void refresh_delta_clip_start_height() {
-  delta_clip_start_height = TERN(HAS_SOFTWARE_ENDSTOPS,
-    motion.soft_endstop.max.z,
-    DIFF_TERN(HAS_BED_PROBE, delta_height, probe.offset.z)
-  ) - delta_safe_distance_from_top();
+  delta_clip_start_height = DELTA_CYLINDER_HEIGHT + delta_height - DELTA_TRUE_HEIGHT ;
 }
 
 /**
  * Recalculate factors used for delta kinematics whenever
  * settings have been changed (e.g., by M665).
+ * With delta_radius=1 (and delta_tower_angle_trim, DELTA_RADIUS_TRIM_TOWER set to 0),
+ * the vectors are: [-sqrt(3)/2, -0.5], [sqrt(3)/2, -0.5], [0,1].
  */
 void recalc_delta_settings() {
   constexpr abc_float_t trt = DELTA_RADIUS_TRIM_TOWER;
@@ -162,54 +161,51 @@ float delta_safe_distance_from_top() {
  * The result is stored in the motion.cartes[] array.
  */
 void forward_kinematics(const float z1, const float z2, const float z3) {
+  // Compute the 2d coordinates of carriages.
+  const float carriage_pos_A [2] = { z1 * delta_tower[A_AXIS].x, z1 * delta_tower[A_AXIS].y };
+  const float carriage_pos_B [2] = { z2 * delta_tower[B_AXIS].x, z2 * delta_tower[B_AXIS].y };
+  const float carriage_pos_C [2] = { z3 * delta_tower[C_AXIS].x, z3 * delta_tower[C_AXIS].y };
+
   // Create a vector in old coordinates along x axis of new coordinate
-  const float p12[3] = { delta_tower[B_AXIS].x - delta_tower[A_AXIS].x, delta_tower[B_AXIS].y - delta_tower[A_AXIS].y, z2 - z1 },
+  const float p12[2] = {carriage_pos_B[0] - carriage_pos_A[0], carriage_pos_B[1] - carriage_pos_A[1] },
 
   // Get the reciprocal of Magnitude of vector.
-  d2 = sq(p12[0]) + sq(p12[1]) + sq(p12[2]), inv_d = RSQRT(d2),
+  d = SQRT(sq(p12[0]) + sq(p12[1])), inv_d = 1/d,
 
   // Create unit vector by multiplying by the inverse of the magnitude.
-  ex[3] = { p12[0] * inv_d, p12[1] * inv_d, p12[2] * inv_d },
+  ex[2] = { p12[0] * inv_d, p12[1] * inv_d },
 
   // Get the vector from the origin of the new system to the third point.
-  p13[3] = { delta_tower[C_AXIS].x - delta_tower[A_AXIS].x, delta_tower[C_AXIS].y - delta_tower[A_AXIS].y, z3 - z1 },
+  p13[2] = { carriage_pos_C[0] - carriage_pos_A[0], carriage_pos_C[1] - carriage_pos_A[1] },
 
   // Use the dot product to find the component of this vector on the X axis.
-  i = ex[0] * p13[0] + ex[1] * p13[1] + ex[2] * p13[2],
+  i = ex[0] * p13[0] + ex[1] * p13[1],
 
   // Create a vector along the x axis that represents the x component of p13.
-  iex[3] = { ex[0] * i, ex[1] * i, ex[2] * i };
+  iex[2] = { ex[0] * i, ex[1] * i };
 
   // Subtract the X component from the original vector leaving only Y. We use the
   // variable that will be the unit vector after we scale it.
-  float ey[3] = { p13[0] - iex[0], p13[1] - iex[1], p13[2] - iex[2] };
+  float ey[2] = { p13[0] - iex[0], p13[1] - iex[1] };
 
   // The magnitude and the inverse of the magnitude of Y component
-  const float j2 = sq(ey[0]) + sq(ey[1]) + sq(ey[2]), inv_j = RSQRT(j2);
+  const float j2 = sq(ey[0]) + sq(ey[1]), inv_j = RSQRT(j2);
 
   // Convert to a unit vector
-  ey[0] *= inv_j; ey[1] *= inv_j; ey[2] *= inv_j;
-
-  // The cross product of the unit x and y is the unit z
-  // float[] ez = vectorCrossProd(ex, ey);
-  const float ez[3] = {
-    ex[1] * ey[2] - ex[2] * ey[1],
-    ex[2] * ey[0] - ex[0] * ey[2],
-    ex[0] * ey[1] - ex[1] * ey[0]
-  },
+  ey[0] *= inv_j; ey[1] *= inv_j;
 
   // We now have the d, i and j values defined in Wikipedia.
   // Plug them into the equations defined in Wikipedia for Xnew, Ynew and Znew
-  Xnew = (delta_diagonal_rod_2_tower.a - delta_diagonal_rod_2_tower.b + d2) * inv_d * 0.5,
-  Ynew = ((delta_diagonal_rod_2_tower.a - delta_diagonal_rod_2_tower.c + sq(i) + j2) * 0.5 - i * Xnew) * inv_j,
-  Znew = SQRT(delta_diagonal_rod_2_tower.a - HYPOT2(Xnew, Ynew));
+  const float Xnew = d * 0.5,
+  Ynew = ((sq(i) + j2) * 0.5 - i * Xnew) * inv_j,
+  Znew = SQRT(DELTA_ROD_L2 - HYPOT2(Xnew, Ynew));
 
   // Start from the origin of the old coordinates and add vectors in the
   // old coords that represent the Xnew, Ynew and Znew to find the point
   // in the old system.
-  motion.cartes.set(delta_tower[A_AXIS].x + ex[0] * Xnew + ey[0] * Ynew - ez[0] * Znew,
-                    delta_tower[A_AXIS].y + ex[1] * Xnew + ey[1] * Ynew - ez[1] * Znew,
-                                       z1 + ex[2] * Xnew + ey[2] * Ynew - ez[2] * Znew);
+  motion.cartes.set(carriage_pos_A[0] + ex[0] * Xnew + ey[0] * Ynew,
+		    carriage_pos_A[1] + ex[1] * Xnew + ey[1] * Ynew,
+		    Znew * DELTA_TOP_RATIO - DELTA_Z_OFFSET + delta_height - DELTA_TRUE_HEIGHT);
 }
 
 /**
@@ -244,7 +240,7 @@ void home_delta() {
   TERN_(HAS_HOMING_CURRENT, motion.set_homing_current(Z_AXIS));
 
   // Move all carriages together linearly until an endstop is hit.
-  motion.position.z = DIFF_TERN(HAS_BED_PROBE, delta_height + 10, probe.offset.z);
+  motion.position.z = (delta_height + 10);
   motion.goto_current_position(motion.homing_feedrate(Z_AXIS));
   planner.synchronize();
   TERN_(HAS_DELTA_SENSORLESS_PROBING, endstops.report_states());
