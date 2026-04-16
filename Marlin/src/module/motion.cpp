@@ -1236,7 +1236,7 @@ void restore_feedrate_and_scaling() {
     #elif ENABLED(DELTA)
 
       soft_endstop.min[axis] = base_min_pos(axis);
-      soft_endstop.max[axis] = (axis == Z_AXIS) ? DIFF_TERN(HAS_BED_PROBE, delta_height, probe.offset.z) : base_max_pos(axis);
+      soft_endstop.max[axis] = (axis == Z_AXIS) ? delta_height : base_max_pos(axis);
 
       switch (axis) {
         case X_AXIS:
@@ -1563,12 +1563,6 @@ float get_move_distance(const xyze_pos_t &diff OPTARG(HAS_ROTATIONAL_AXES, bool 
 
     const xyze_float_t diff = destination - current_position;
 
-    // If the move is only in Z/E don't split up the move
-    if (!diff.x && !diff.y) {
-      planner.buffer_line(destination, scaled_fr_mm_s);
-      return false; // caller will update current_position
-    }
-
     // Fail if attempting move outside printable radius
     if (!position_is_reachable(destination)) return true;
 
@@ -1656,12 +1650,6 @@ float get_move_distance(const xyze_pos_t &diff OPTARG(HAS_ROTATIONAL_AXES, bool 
     inline void segmented_line_to_destination(const_feedRate_t fr_mm_s, const float segment_size=LEVELED_SEGMENT_LENGTH) {
 
       const xyze_float_t diff = destination - current_position;
-
-      // If the move is only in Z/E don't split up the move
-      if (!diff.x && !diff.y) {
-        planner.buffer_line(destination, fr_mm_s);
-        return;
-      }
 
       // Get the linear distance in XYZ
       #if HAS_ROTATIONAL_AXES
@@ -2833,7 +2821,7 @@ void set_axis_is_at_home(const AxisEnum axis) {
   #if ANY(MORGAN_SCARA, AXEL_TPARA)
     scara_set_axis_is_at_home(axis);
   #elif ENABLED(DELTA)
-    current_position[axis] = (axis == Z_AXIS) ? DIFF_TERN(HAS_BED_PROBE, delta_height, probe.offset.z) : base_home_pos(axis);
+    current_position[axis] = (axis == Z_AXIS) ? delta_height : base_home_pos(axis);
   #else
     current_position[axis] = SUM_TERN(HAS_HOME_OFFSET, base_home_pos(axis), home_offset[axis]);
   #endif

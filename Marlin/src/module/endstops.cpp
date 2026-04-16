@@ -957,8 +957,7 @@ void Endstops::update() {
           // If the Z_MIN_PIN is being used for the probe there's no
           // separate Z_MIN endstop. But a Z endstop could be wired
           // in series, so someone might find this useful.
-          if ( TERN1(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, z_probe_enabled) // When Z_MIN is the probe, the probe must be enabled
-            && TERN1(USE_Z_MIN_PROBE, !z_probe_enabled)                   // When Z_MIN isn't the probe, Z MIN is ignored while probing
+	     if ( TERN1(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN, z_probe_enabled) // When Z_MIN is the probe, the probe must be enabled
           ) {
             PROCESS_ENDSTOP_Z(MIN);
             #if   CORE_DIAG(XZ, X, MIN)
@@ -971,11 +970,6 @@ void Endstops::update() {
               PROCESS_CORE_ENDSTOP(Y,MAX,Z,MIN);
             #endif
           }
-        #endif
-
-        // When closing the gap use the probe trigger state
-        #if USE_Z_MIN_PROBE
-          if (z_probe_enabled) PROCESS_ENDSTOP(Z, MIN_PROBE);
         #endif
       }
       else {
@@ -991,6 +985,11 @@ void Endstops::update() {
           #elif CORE_DIAG(YZ, Y, MAX)
             PROCESS_CORE_ENDSTOP(Y,MAX,Z,MAX);
           #endif
+        #endif
+
+        // When closing the gap use the probe trigger state
+        #if USE_Z_MIN_PROBE
+          if (z_probe_enabled) PROCESS_ENDSTOP(Z, MIN_PROBE);
         #endif
       }
     }
