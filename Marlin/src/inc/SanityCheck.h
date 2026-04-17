@@ -1244,13 +1244,6 @@ static_assert(NUM_SERVOS <= NUM_SERVO_PLUGS, "NUM_SERVOS (or some servo index) i
 #endif
 
 /**
- * Junction deviation is incompatible with kinematic systems.
- */
-#if HAS_JUNCTION_DEVIATION && IS_KINEMATIC
-  #error "CLASSIC_JERK is required for the kinematics of DELTA, SCARA, POLAR, etc."
-#endif
-
-/**
  * Some things should not be used on Belt Printers
  */
 #if ALL(BELTPRINTER, HAS_LEVELING)
