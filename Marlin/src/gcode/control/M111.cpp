@@ -40,6 +40,12 @@ void GcodeSuite::M111() {
   #if ENABLED(DEBUG_LEVELING_FEATURE)
     static PGMSTR(str_debug_detail, STR_DEBUG_DETAIL);
   #endif
+  #if ENABLED(DEBUG_LEVELING_FEATURE)
+    static PGMSTR(str_debug_mesh_adjust, STR_DEBUG_DETAIL);
+  #endif
+  #if ENABLED(DEBUG_PLANNER)
+    static PGMSTR(str_debug_planner, STR_DEBUG_PLANNER);
+  #endif
 
   static PGM_P const debug_strings[] PROGMEM = {
     TERN(DEBUG_FLAGS_GCODE, str_debug_1, nullptr),
@@ -47,7 +53,9 @@ void GcodeSuite::M111() {
     TERN(DEBUG_FLAGS_GCODE, str_debug_4, nullptr),
     str_debug_8,
     TERN(DEBUG_FLAGS_GCODE, str_debug_16, nullptr),
-    TERN_(DEBUG_LEVELING_FEATURE, str_debug_detail)
+    TERN_(DEBUG_LEVELING_FEATURE, str_debug_detail),
+    TERN_(DEBUG_LEVELING_FEATURE, str_debug_mesh_adjust),
+    TERN_(DEBUG_PLANNER, str_debug_planner)
   };
 
   SERIAL_ECHO_START();
