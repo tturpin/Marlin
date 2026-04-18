@@ -129,6 +129,10 @@ block_t Planner::block_buffer[BLOCK_BUFFER_SIZE];
 volatile uint8_t Planner::block_buffer_head,    // Index of the next block to be pushed
                  Planner::block_buffer_nonbusy, // Index of the first non-busy block
                  Planner::block_buffer_tail;    // Index of the busy block, if any
+#if ENABLED(DEBUG_PLANNER)
+  volatile uint8_t Planner::block_buffer_busy_tail;
+  uint32_t Planner::dump_block_count;
+#endif
 uint16_t Planner::cleaning_buffer_counter;      // A counter to disable queuing of blocks
 uint8_t Planner::delay_before_delivering;       // Delay block delivery so initial blocks in an empty queue may merge
 
@@ -1198,11 +1202,47 @@ void Planner::recalculate_trapezoids(const float safe_exit_speed_sqr) {
   }
 }
 
+#if ENABLED(DEBUG_PLANNER)
+// Prints all blocks that have been consumed (or are busy) and not yet
+// printed. We call it at the end of recalculate, and also of
+// check_axes_activity(), so that all consumed blocks are eventually
+// printed even if no new blocks are queued (interactive debugging)
+void Planner::dump_blocks() {
+  if (DEBUGGING(PLANNER))
+    while(block_buffer_busy_tail != block_buffer_nonbusy) {
+      block_t *block = &block_buffer[block_buffer_busy_tail];
+      forward_kinematics(block->start_position.x, block->start_position.y, block->start_position.z);
+      // count, step_event_count, X, Y, Z, A, B, C, nominal_rate(step event/s), initial_rate, final_rate, acceleration_mm_per_s2, accelerate_before(steps), decelerate_start
+      SERIAL_ECHOLNPGM("block ", dump_block_count,
+		       ",", block->step_event_count, // evenly distributed steps w.r.t. move distance
+		       ",", motion.cartes.x,
+		       ",", motion.cartes.y,
+		       ",", motion.cartes.z,
+		       ",", block->start_position.x,
+		       ",", block->start_position.y,
+		       ",", block->start_position.z,
+		       ",", block->nominal_rate,
+		       ",", block->initial_rate,
+		       ",", block->final_rate,
+		       ",", block->acceleration_steps_per_s2,
+		       ",", block->accelerate_before,
+		       ",", block->decelerate_start);
+      block_buffer_busy_tail=next_block_index(block_buffer_busy_tail);
+      dump_block_count++;
+
+    }
+}
+#endif
+
 // Requires there's at least one block with flag.recalculate in the buffer
 void Planner::recalculate(const float safe_exit_speed_sqr) {
   reverse_pass(safe_exit_speed_sqr);
   // The forward pass is done as part of recalculate_trapezoids()
   recalculate_trapezoids(safe_exit_speed_sqr);
+
+  #if ENABLED(DEBUG_PLANNER)
+    dump_blocks();
+  #endif
 }
 
 /**
@@ -1363,6 +1403,10 @@ void Planner::check_axes_activity() {
   #if ENABLED(BARICUDA)
     TERN_(HAS_HEATER_1, hal.set_pwm_duty(pin_t(HEATER_1_PIN), tail_valve_pressure));
     TERN_(HAS_HEATER_2, hal.set_pwm_duty(pin_t(HEATER_2_PIN), tail_e_to_p_pressure));
+  #endif
+
+  #if ENABLED(DEBUG_PLANNER)
+    dump_blocks();
   #endif
 }
 

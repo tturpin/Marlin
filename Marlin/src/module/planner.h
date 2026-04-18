@@ -511,6 +511,10 @@ class Planner {
     static volatile uint8_t block_buffer_head,      // Index of the next block to be pushed
                             block_buffer_nonbusy,   // Index of the first non busy block
                             block_buffer_tail;      // Index of the busy block, if any
+    #if ENABLED(DEBUG_PLANNER)
+      static volatile uint8_t block_buffer_busy_tail;
+      static uint32_t dump_block_count;
+    #endif
     static uint16_t cleaning_buffer_counter;        // A counter to disable queuing of blocks
     static uint8_t delay_before_delivering;         // This counter delays delivery of blocks when queue becomes empty to allow the opportunity of merging blocks
 
@@ -910,6 +914,10 @@ class Planner {
       block_buffer_tail = 0;
       block_buffer_head = 0;
       block_buffer_nonbusy = 0;
+      #if ENABLED(DEBUG_PLANNER)
+        block_buffer_busy_tail = 0;
+        dump_block_count = 0;
+      #endif
     }
 
     // Check if movement queue is full
@@ -1248,6 +1256,10 @@ class Planner {
       }
 
     #endif // HAS_JUNCTION_DEVIATION
+
+    #if ENABLED(DEBUG_PLANNER)
+      static void dump_blocks();
+    #endif
 };
 
 #if HAS_Y_AXIS

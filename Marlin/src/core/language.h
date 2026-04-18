@@ -276,6 +276,7 @@
 #define STR_DEBUG_DRYRUN                    "DRYRUN"
 #define STR_DEBUG_COMMUNICATION             "COMMUNICATION"
 #define STR_DEBUG_DETAIL                    "DETAIL"
+#define STR_DEBUG_PLANNER                   "PLANNER"
 
 // Password Security
 #define STR_PRINTER_LOCKED                  "Printer locked! (Unlock with M511 or LCD)"
