@@ -2746,12 +2746,17 @@ bool Planner::_populate_block(
 
       // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
       // Scale per-axis velocities for the same vmax_junction.
-      if (block->nominal_speed < previous_nominal_speed) {
+      // Define vmax_junction as min(block->nominal_speed, previous_nominal_speed)
+      // Scale the fastest speed vector (of previous_speed, current_speed) down to vmax_junction
+      // Define speed_diff as the difference between (scaled) previous and current speed vectors.
+      // This corresponds to the jerk that would occur if we made the junction at a fixed speed,
+      // (vmax_junction, the minimum of the two nominal speeds), just changing direction.
+      if (block->nominal_speed < previous_nominal_speed) { // Decelerating
         vmax_junction = block->nominal_speed;
         const float previous_scale = vmax_junction / previous_nominal_speed;
         LOOP_LOGICAL_AXES(i) speed_diff[i] -= previous_speed[i] * previous_scale;
       }
-      else {
+      else { // Accelerating or maintaining speed
         vmax_junction = previous_nominal_speed;
         const float current_scale = vmax_junction / block->nominal_speed;
         LOOP_LOGICAL_AXES(i) speed_diff[i] = speed_diff[i] * current_scale - previous_speed[i];
@@ -2759,6 +2764,8 @@ bool Planner::_populate_block(
     }
 
     // Now limit the jerk in all axes.
+    // Determine the maximum v_factor <= 1 such that for all logical axes i,
+    // ABS(speed_diff[i]) * v_factor < max_j[i]
     float v_factor = 1.0f;
     LOOP_LOGICAL_AXES(i) {
       // Jerk is the per-axis velocity difference.
