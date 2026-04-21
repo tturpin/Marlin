@@ -3045,7 +3045,7 @@
    * Interpolate microsteps to 256
    * Override for each driver with <driver>_INTERPOLATE settings below
    */
-  #define INTERPOLATE      true
+  #define INTERPOLATE      false
 
   #if HAS_DRIVER(TMC2240)
     #define TMC2240_RREF        12000   // (Ω) 12000 .. 60000. (FLY TMC2240 = 12300)
@@ -3061,7 +3061,7 @@
     // 32 microsteps seems better than 16: less vibration with 100Hz
     // filter. 64 does not seem to improve further. 128 Causes
     // additional jerky speed changes between direction changes.
-    #define X_MICROSTEPS     32        // 0..256
+    #define X_MICROSTEPS     MICROSTEPS        // 0..256
     #define X_RSENSE          0.11
     #define X_CHAIN_POS      -1        // -1..0: Not chained. 1: MCU MOSI connected. 2: Next in chain, ...
     //#define X_INTERPOLATE  true      // Enable to override 'INTERPOLATE' for the X axis
@@ -3081,7 +3081,7 @@
   #if AXIS_IS_TMC_CONFIG(Y)
     #define Y_CURRENT       1050
     #define Y_CURRENT_HOME  Y_CURRENT
-    #define Y_MICROSTEPS     32
+    #define Y_MICROSTEPS     MICROSTEPS
     #define Y_RSENSE          0.11
     #define Y_CHAIN_POS      -1
     //#define Y_INTERPOLATE  true
@@ -3101,7 +3101,7 @@
   #if AXIS_IS_TMC_CONFIG(Z)
     #define Z_CURRENT       1050
     #define Z_CURRENT_HOME  Z_CURRENT
-    #define Z_MICROSTEPS     32
+    #define Z_MICROSTEPS     MICROSTEPS
     #define Z_RSENSE          0.11
     #define Z_CHAIN_POS      -1
     //#define Z_INTERPOLATE  true
@@ -3200,7 +3200,7 @@
 
   #if AXIS_IS_TMC_CONFIG(E0)
     #define E0_CURRENT      1050
-    #define E0_MICROSTEPS    32
+    #define E0_MICROSTEPS    MICROSTEPS
     #define E0_RSENSE         0.11
     #define E0_CHAIN_POS     -1
     //#define E0_INTERPOLATE true
