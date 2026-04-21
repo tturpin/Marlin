@@ -1360,12 +1360,15 @@
  */
 //#define DISTINCT_E_FACTORS
 
+#define MICROSTEPS       32        // 0..256
+
 /**
  * Default Axis Steps Per Unit (linear=steps/mm, rotational=steps/°)
  * Override with M92 (when enabled below)
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 160, 160, 160, 830 }
+
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { (5*MICROSTEPS), (5*MICROSTEPS), (5*MICROSTEPS), (25.9375*MICROSTEPS) }
 
 /**
  * Enable support for M92. Disable to save at least ~530 bytes of flash.
