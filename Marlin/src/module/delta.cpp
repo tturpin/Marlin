@@ -34,6 +34,7 @@
 // For homing:
 #include "planner.h"
 #include "endstops.h"
+#include "stepper.h"
 #include "../lcd/marlinui.h"
 
 #if HAS_BED_PROBE
@@ -215,6 +216,9 @@ void forward_kinematics(const float z1, const float z2, const float z3) {
 void home_delta() {
   DEBUG_SECTION(log_home_delta, "home_delta", DEBUGGING(LEVELING));
 
+  bool re_home = motion.all_axes_trusted();
+  stepper.reset_shift();
+
   // Init the current position of all carriages to 0,0,0
   motion.position.reset();
   motion.destination.reset();
@@ -279,6 +283,11 @@ void home_delta() {
   LOOP_ABC(i) motion.set_axis_is_at_home((AxisEnum)i);
 
   motion.sync_plan_position();
+
+  if (re_home) {
+    xyze_long_t shift = stepper.shift();
+    DEBUG_ECHOLNPGM("Homing shifted by: A = ", shift.a, ", B = ", shift.b, ", C = ", shift.c);
+  }
 
   #if DISABLED(DELTA_HOME_TO_SAFE_ZONE) && defined(HOMING_BACKOFF_POST_MM)
     constexpr xyz_float_t endstop_backoff = HOMING_BACKOFF_POST_MM;

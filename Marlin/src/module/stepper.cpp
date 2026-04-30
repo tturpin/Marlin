@@ -305,6 +305,7 @@ hal_timer_t Stepper::ticks_nominal = 0;
 
 xyz_long_t Stepper::endstops_trigsteps;
 xyze_long_t Stepper::count_position{0};
+xyze_long_t Stepper::count_shift{0};
 xyze_int8_t Stepper::count_direction{0};
 
 // Axis moving towards MIN/MAX
@@ -3500,12 +3501,21 @@ int32_t Stepper::position(const AxisEnum axis) {
   return v;
 }
 
+xyze_long_t Stepper::shift() {
+  return count_shift;
+}
+
+void Stepper::reset_shift() {
+  LOOP_ABC(a) count_shift[a] = 0;
+}
+
 /**
  * Set all axis stepper positions in steps
  */
 void Stepper::set_position(const xyze_long_t &spos) {
   planner.synchronize();
   ATOMIC_SECTION_START();
+  LOOP_ABC(a) count_shift[a]+=spos[a]-count_position[a];
   _set_position(spos);
   ATOMIC_SECTION_END();
 }
