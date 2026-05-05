@@ -700,7 +700,12 @@ class Stepper {
     }
     static void mark_axis_disabled(const AxisEnum axis E_OPTARG(const uint8_t eindex=0)) {
       CBI(axis_enabled.bits, INDEX_OF_AXIS(axis, eindex));
-      #if HAS_Z_AXIS
+      // On DELTA, setting current_position.z while keeping
+      // planner.position unchanged will cause unexpected subsequent
+      // move: a segmented move between "Z=0" (cartesian) position,
+      // whose first segment goes from the unchanged planner.position
+      // to nearly "Z=0" (and nozzle bed crash).
+      #if DISABLED(DELTA) && HAS_Z_AXIS
         if (TERN0(Z_CAN_FALL_DOWN, axis == Z_AXIS)) {
           z_min_trusted = false;
           current_position.z = 0;
