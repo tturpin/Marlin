@@ -967,6 +967,7 @@ namespace LanguageNarrow_en {
   LSTR DGUS_MSG_HOMING                    = _UxGT("Homing...");
   LSTR DGUS_MSG_FW_OUTDATED               = _UxGT("DWIN GUI/OS update required");
   LSTR DGUS_MSG_ABL_REQUIRED              = _UxGT("Auto bed leveling required");
+  LSTR DGUS_MSG_BABYSTEPPING_REQUIRED     = _UxGT("Babystepping required");
   LSTR DGUS_MSG_PROBING_FAILED            = _UxGT("Probing failed");
   LSTR DGUS_MSG_PROBING_SUCCESS           = _UxGT("Probing successful");
   LSTR DGUS_MSG_RESET_EEPROM              = _UxGT("EEPROM reset");

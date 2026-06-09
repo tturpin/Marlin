@@ -242,6 +242,7 @@ void DGUSRxHandler::flowrate(DGUS_VP &vp, void *data_ptr) {
 void DGUSRxHandler::babystepSet(DGUS_VP &vp, void *data_ptr) {
   UNUSED(vp);
 
+#if ENABLED(BABYSTEPPING)
   const int16_t data = BE16_P(data_ptr);
   const float offset = dgus.fromFixedPoint<int16_t, float, 2>(data);
 
@@ -251,11 +252,16 @@ void DGUSRxHandler::babystepSet(DGUS_VP &vp, void *data_ptr) {
 
   screen.triggerEEPROMSave();
   screen.triggerFullUpdate();
+#else
+  screen.setStatusMessage(GET_TEXT_F(DGUS_MSG_BABYSTEPPING_REQUIRED));
+  return;
+#endif
 }
 
 void DGUSRxHandler::babystep(DGUS_VP &vp, void *data_ptr) {
   UNUSED(vp);
 
+#if ENABLED(BABYSTEPPING)
   const DGUS_Data::Adjust adjust = (DGUS_Data::Adjust)((uint8_t*)data_ptr)[1];
   int16_t steps;
 
@@ -269,6 +275,10 @@ void DGUSRxHandler::babystep(DGUS_VP &vp, void *data_ptr) {
 
   screen.triggerEEPROMSave();
   screen.triggerFullUpdate();
+#else
+  screen.setStatusMessage(GET_TEXT_F(DGUS_MSG_BABYSTEPPING_REQUIRED));
+  return;
+#endif
 }
 
 void DGUSRxHandler::tempPreset(DGUS_VP &vp, void *data_ptr) {
@@ -367,6 +377,7 @@ void DGUSRxHandler::steppers(DGUS_VP &vp, void *data_ptr) {
 void DGUSRxHandler::zOffset(DGUS_VP &vp, void *data_ptr) {
   UNUSED(vp);
 
+#if ENABLED(BABYSTEPPING)
   if (TERN0(NO_MOTION_BEFORE_HOMING, !ExtUI::isAxisPositionKnown(ExtUI::Z))) {
     screen.setStatusMessage(GET_TEXT_F(DGUS_MSG_HOMING_REQUIRED));
     return;
@@ -386,6 +397,10 @@ void DGUSRxHandler::zOffset(DGUS_VP &vp, void *data_ptr) {
 
   screen.triggerEEPROMSave();
   screen.triggerFullUpdate();
+#else
+  screen.setStatusMessage(GET_TEXT_F(DGUS_MSG_BABYSTEPPING_REQUIRED));
+  return;
+#endif
 }
 
 void DGUSRxHandler::zOffsetStep(DGUS_VP &vp, void *data_ptr) {
@@ -402,6 +417,8 @@ void DGUSRxHandler::zOffsetStep(DGUS_VP &vp, void *data_ptr) {
   }
 
   const DGUS_Data::Adjust adjust = (DGUS_Data::Adjust)((uint8_t*)data_ptr)[1];
+
+#if ENABLED(BABYSTEPPING)
   int16_t steps;
 
   switch (screen.offset_steps) {
@@ -418,6 +435,25 @@ void DGUSRxHandler::zOffsetStep(DGUS_VP &vp, void *data_ptr) {
 
   screen.triggerEEPROMSave();
   screen.triggerFullUpdate();
+#else
+  float shift;
+  switch (screen.offset_steps) {
+    default: return;
+    case DGUS_Data::StepSize::MMP1:
+      shift = (adjust == DGUS_Data::Adjust::INCREMENT ? 0.1f : -0.1f);
+      break;
+    case DGUS_Data::StepSize::MMP01:
+      shift = (adjust == DGUS_Data::Adjust::INCREMENT ? 0.01f : -0.01f);
+      break;
+  }
+  delta_height -= shift;
+  planner.position_cart.z -= shift;
+  motion.goto_current_position();
+  planner.synchronize();
+  screen.triggerEEPROMSave();
+  screen.triggerFullUpdate();
+  return;
+#endif
 }
 
 void DGUSRxHandler::zOffsetSetStep(DGUS_VP &vp, void *data_ptr) {
@@ -433,6 +469,7 @@ void DGUSRxHandler::zOffsetSetStep(DGUS_VP &vp, void *data_ptr) {
 void DGUSRxHandler::moveToPoint(DGUS_VP &vp, void *data_ptr) {
   UNUSED(vp);
 
+#if ENABLED(MESH_BED_LEVELING)
   if (!ExtUI::isPositionKnown()) {
     screen.setStatusMessage(GET_TEXT_F(DGUS_MSG_HOMING_REQUIRED));
     return;
@@ -476,6 +513,10 @@ void DGUSRxHandler::moveToPoint(DGUS_VP &vp, void *data_ptr) {
   ExtUI::setAxisPosition_mm(x, ExtUI::X);
   ExtUI::setAxisPosition_mm(y, ExtUI::Y);
   ExtUI::setAxisPosition_mm((Z_MIN_POS) + (BED_TRAMMING_HEIGHT), ExtUI::Z);
+#else
+    screen.setStatusMessage(GET_TEXT_F(DGUS_MSG_ABL_REQUIRED));
+    return;
+#endif
 }
 
 void DGUSRxHandler::probe(DGUS_VP &vp, void *data_ptr) {

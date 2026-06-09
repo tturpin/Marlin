@@ -74,11 +74,11 @@
 #endif
 
 #ifndef DGUS_LEVEL_CENTER_X
-  #define DGUS_LEVEL_CENTER_X ((X_BED_SIZE) / 2)
+  #define DGUS_LEVEL_CENTER_X X_CENTER
 #endif
 
 #ifndef DGUS_LEVEL_CENTER_Y
-  #define DGUS_LEVEL_CENTER_Y ((Y_BED_SIZE) / 2)
+  #define DGUS_LEVEL_CENTER_Y Y_CENTER
 #endif
 
 #if ENABLED(BLTOUCH)

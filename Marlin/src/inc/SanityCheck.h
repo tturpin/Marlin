@@ -1630,8 +1630,6 @@ static_assert(NUM_SERVOS <= NUM_SERVO_PLUGS, "NUM_SERVOS (or some servo index) i
     #endif
   #endif
   static_assert(BED_TRAMMING_Z_HOP >= 0, "BED_TRAMMING_Z_HOP must be >= 0.");
-#elif ANY(DGUS_LCD_UI_RELOADED, DGUS_LCD_UI_E3S1PRO)
-  #error "LCD_BED_TRAMMING is required for the selected display."
 #endif
 
 /**
@@ -4527,14 +4525,6 @@ static_assert(_PLUS_TEST(3), "DEFAULT_MAX_ACCELERATION values must be positive."
     #error "DGUS_LCD_UI RELOADED requires a fan."
   #elif !HAS_BED_PROBE
     #error "DGUS_LCD_UI RELOADED requires a bed probe."
-  #elif !HAS_MESH
-    #error "DGUS_LCD_UI RELOADED requires mesh leveling."
-  #elif DISABLED(LCD_BED_TRAMMING)
-    #error "DGUS_LCD_UI RELOADED requires LCD_BED_TRAMMING."
-  #elif DISABLED(BABYSTEP_ALWAYS_AVAILABLE)
-    #error "DGUS_LCD_UI RELOADED requires BABYSTEP_ALWAYS_AVAILABLE."
-  #elif DISABLED(BABYSTEP_ZPROBE_OFFSET)
-    #error "DGUS_LCD_UI RELOADED requires BABYSTEP_ZPROBE_OFFSET."
   #elif ENABLED(HOME_AFTER_DEACTIVATE)
     #error "DGUS_LCD_UI RELOADED requires HOME_AFTER_DEACTIVATE to be disabled."
   #elif ENABLED(AUTO_BED_LEVELING_UBL) && DISABLED(UBL_SAVE_ACTIVE_ON_M500)
